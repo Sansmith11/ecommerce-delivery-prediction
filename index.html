@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Commerce Delivery Predictor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 30px 16px;
+    }
+    .container {
+      max-width: 750px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+    .header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .header p { opacity: 0.85; font-size: 1rem; }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.82rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select {
+      padding: 11px 14px;
+      border: 2px solid #e8e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: #333;
+      transition: border 0.2s;
+      background: #fafafa;
+    }
+    input:focus, select:focus { outline: none; border-color: #667eea; background: white; }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    .btn:active { transform: translateY(0); }
+    .result {
+      margin-top: 24px;
+      padding: 20px;
+      border-radius: 14px;
+      text-align: center;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .result.success { background: #e8f5e9; border: 2px solid #4caf50; }
+    .result.danger  { background: #fdecea; border: 2px solid #f44336; }
+    .result .icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .result .label { font-size: 1.3rem; font-weight: 700; color: #333; margin-bottom: 4px; }
+    .result .conf  { font-size: 0.9rem; color: #666; }
+    .divider { border: none; border-top: 1px solid #eee; margin: 24px 0; }
+    @media(max-width:560px){ .grid { grid-template-columns: 1fr; } .form-group.full { grid-column: 1; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📦 Delivery Predictor</h1>
+    <p>E-Commerce Product On-Time Delivery Prediction</p>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <div class="form-group">
+        <label>Warehouse Block</label>
+        <select id="warehouse_block">
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D" selected>D</option>
+          <option value="F">F</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Mode of Shipment</label>
+        <select id="mode_of_shipment">
+          <option value="Ship" selected>Ship</option>
+          <option value="Flight">Flight</option>
+          <option value="Road">Road</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Customer Care Calls</label>
+        <input type="number" id="customer_care_calls" min="0" max="10" value="4" />
+      </div>
+
+      <div class="form-group">
+        <label>Customer Rating (1–5)</label>
+        <input type="number" id="customer_rating" min="1" max="5" value="3" />
+      </div>
+
+      <div class="form-group">
+        <label>Cost of Product (USD)</label>
+        <input type="number" id="cost_of_product" min="0" value="150" />
+      </div>
+
+      <div class="form-group">
+        <label>Prior Purchases</label>
+        <input type="number" id="prior_purchases" min="0" value="3" />
+      </div>
+
+      <div class="form-group">
+        <label>Product Importance</label>
+        <select id="product_importance">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="M" selected>Male</option>
+          <option value="F">Female</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Discount Offered (%)</label>
+        <input type="number" id="discount_offered" min="0" max="100" value="10" />
+      </div>
+
+      <div class="form-group">
+        <label>Weight (grams)</label>
+        <input type="number" id="weight_in_gms" min="0" value="2500" />
+      </div>
+    </div>
+
+    <button class="btn" onclick="predict()">🔍 Predict Delivery</button>
+
+    <div class="result" id="result">
+      <div class="icon" id="result-icon"></div>
+      <div class="label" id="result-label"></div>
+      <div class="conf"  id="result-conf"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function predict() {
+  const payload = {
+    warehouse_block:    document.getElementById('warehouse_block').value,
+    mode_of_shipment:   document.getElementById('mode_of_shipment').value,
+    customer_care_calls:document.getElementById('customer_care_calls').value,
+    customer_rating:    document.getElementById('customer_rating').value,
+    cost_of_product:    document.getElementById('cost_of_product').value,
+    prior_purchases:    document.getElementById('prior_purchases').value,
+    product_importance: document.getElementById('product_importance').value,
+    gender:             document.getElementById('gender').value,
+    discount_offered:   document.getElementById('discount_offered').value,
+    weight_in_gms:      document.getElementById('weight_in_gms').value,
+  };
+
+  try {
+    const res = await fetch('/predict', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    const box = document.getElementById('result');
+    box.style.display = 'block';
+    if (data.error) {
+      box.className = 'result danger';
+      document.getElementById('result-icon').textContent = '⚠️';
+      document.getElementById('result-label').textContent = 'Error: ' + data.error;
+      document.getElementById('result-conf').textContent = '';
+    } else {
+      const onTime = data.prediction === 0;
+      box.className = 'result ' + (onTime ? 'success' : 'danger');
+      document.getElementById('result-icon').textContent = onTime ? '✅' : '❌';
+      document.getElementById('result-label').textContent = data.label;
+      document.getElementById('result-conf').textContent = `Confidence: ${data.confidence}%`;
+    }
+  } catch(e) {
+    alert('Request failed: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
